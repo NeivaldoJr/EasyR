@@ -222,5 +222,6 @@ __marimo__/
 *.xlsx
 *.xls
 *.csv
+
 # Streamlit
 .streamlit/secrets.toml

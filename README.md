@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/1472762538.svg)](https://doi.org/10.5281/zenodo.24552467)
 ## Licença e Direitos Autorais
 
 **EasyR** — Gerador de scripts estatísticos e gráficos científicos em R.  
