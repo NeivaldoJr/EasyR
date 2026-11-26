@@ -1,0 +1,618 @@
+<!--========= 1. CABEÇALHO DO DOCUMENTO (HEAD) ==============-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EasyR</title>
+<link rel="stylesheet" href="estilo.css?v=4" />
+</head>
+<body class="theme-amber">
+
+  <!--========= 2. FUNDO DECORATIVO E BARRA SUPERIOR (HEADER) ==============-->
+  <svg class="dunes-layer" viewBox="0 0 1440 900" preserveAspectRatio="none">
+    <path d="M0,740 Q360,670 720,730 T1440,700 L1440,900 L0,900 Z" fill="var(--dune-1)" />
+    <path d="M0,800 Q440,850 920,785 T1440,810 L1440,900 L0,900 Z" fill="var(--dune-2)" />
+  </svg>
+
+  <header>
+    <div class="brand">
+      <div class="sun-orb"></div>
+      <div>
+        <h1>EasyR</h1>
+        <span id="subtitulo-topo">Seleção de Análise</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="theme-switch" onclick="abrirGuia(1)" id="btn-nova-analise" style="display: none;">
+        + Nova Análise
+      </button>
+      <button class="theme-switch" onclick="alternarTema()" id="btn-tema">
+        Modo: Horizonte Âmbar
+      </button>
+    </div>
+  </header>
+
+  <!--========= 3. MOLDURA PRINCIPAL (GLASS CARD) ==============-->
+  <main>
+    <div class="glass-card">
+      <div class="molten-bar"></div>
+
+      <!--========= 4. GUIA 1 — SELEÇÃO DA ANÁLISE ESTATÍSTICA ==============-->
+      <section class="guia ativa" id="guia-1">
+        <div class="guia-header">
+          <h2>
+            Escolha a Análise Estatística
+            <span class="help-tip" data-help="Passe o mouse sobre o ícone (?) de cada cartão para ver quando aquela análise estatística é mais indicada.">?</span>
+          </h2>
+          <p>Selecione o delineamento experimental, teste de comparação de médias ou análise exploratória.</p>
+        </div>
+
+        <div class="design-grid" id="grid-delineamentos"></div>
+      </section>
+
+      <!--========= 5. GUIA 2 — IMPORTAÇÃO E PRÉ-VISUALIZAÇÃO DA PLANILHA ==============-->
+      <section class="guia" id="guia-2">
+        <div class="guia-header">
+          <h2>
+            <span id="titulo-guia-2">Importação da Planilha</span>
+            <span class="help-tip" data-help="Aceita arquivos .xlsx, .xls ou .csv. A primeira linha deve conter os nomes das colunas, sem células mescladas ou linhas em branco acima do cabeçalho.">?</span>
+          </h2>
+          <p>Selecione o arquivo Excel ou CSV e escolha a aba correspondente ao conjunto de dados.</p>
+        </div>
+
+        <div class="toolbar">
+          <button class="btn-solar" onclick="abrirPlanilha()">
+            Selecionar Planilha (.xlsx / .csv)
+          </button>
+
+          <div class="file-meta" id="info-arquivo">
+            Nenhum arquivo selecionado
+            <small>Aguardando conexão com planilha</small>
+          </div>
+
+          <div class="controles-direita">
+            <label class="toggle-vis">
+              <input type="checkbox" id="chk-visualizar" onchange="alternarVisualizacaoTabela()" />
+              <span>Visualizar dados</span>
+              <span class="help-tip" data-help="Exibe as primeiras 100 linhas da planilha para você conferir se números e textos foram lidos corretamente.">?</span>
+            </label>
+
+            <div class="aba-selector-box">
+              <span>Aba:<span class="help-tip" data-help="Se o arquivo Excel tiver várias planilhas (abas), escolha aqui qual aba contém os dados desta análise.">?</span></span>
+              <select class="dune-select" id="select-aba" disabled onchange="mudarAba(this.value)">
+                <option>-</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap" id="container-tabela">
+          <div class="placeholder-box">
+            <strong>Nenhuma planilha carregada</strong>
+            <span>A visualização inicia desligada por padrão. Marque "Visualizar dados" acima caso queira inspecionar a tabela.</span>
+          </div>
+        </div>
+
+        <div class="alerts-strip" id="strip-alertas"></div>
+
+        <div class="footer-nav">
+          <button class="btn-ghost" onclick="abrirGuia(1)">← Trocar Análise</button>
+          <button class="btn-solar" onclick="irParaVariaveis()">Continuar para Variáveis →</button>
+        </div>
+      </section>
+
+      <!--========= 6. GUIA 3 — MAPEAMENTO DE FATORES E VARIÁVEIS ==============-->
+      <section class="guia" id="guia-3">
+        <div class="guia-header">
+          <h2 id="titulo-guia-3">Mapeamento de Fatores e Variáveis</h2>
+          <p>Defina as colunas estruturais e marque todas as variáveis resposta da análise.</p>
+        </div>
+
+        <div class="mapeamento-grid">
+          <div class="panel-box">
+            <h4>
+              <span>
+                Fatores e Estrutura
+                <span class="help-tip" data-help="Indique quais colunas representam os tratamentos, blocos ou fatores do experimento. Colunas escolhidas aqui são bloqueadas na lista de variáveis resposta.">?</span>
+              </span>
+            </h4>
+            <div id="container-fatores"></div>
+          </div>
+
+          <div class="panel-box">
+            <h4>
+              <span>
+                Variáveis Resposta
+                <span class="help-tip" data-help="Marque todas as variáveis medidas no experimento (altura, massa, produtividade, etc.). O script R rodará a análise automaticamente para cada uma.">?</span>
+              </span>
+              <div class="acoes-inline">
+                <button class="btn-ghost btn-mini" onclick="limparSelecaoVars()">Limpar</button>
+                <button class="btn-ghost btn-mini" onclick="marcarTodasNumericas()">Marcar Numéricas</button>
+              </div>
+            </h4>
+            <div class="vars-list" id="lista-variaveis"></div>
+          </div>
+        </div>
+
+        <div class="footer-nav">
+          <button class="btn-ghost" onclick="abrirGuia(2)">← Voltar para Planilha</button>
+          <button class="btn-solar" onclick="irParaParametros()">Parâmetros da Análise →</button>
+        </div>
+      </section>
+
+      <!--========= 7. GUIA 4 — SIGNIFICÂNCIA (α), PALETA E ESTÚDIO GRÁFICO ==============-->
+      <section class="guia" id="guia-4">
+        <div class="guia-header">
+          <h2 id="titulo-guia-4">Parâmetros e Personalização Científica</h2>
+          <p id="desc-guia-4">Configure o nível de significância (α), a paleta de cores e o acabamento visual para publicação.</p>
+        </div>
+
+        <div class="param-grid" id="grid-parametros">
+          <!-- Coluna Esquerda: Alfa + Paleta de Cores -->
+          <div class="panel-box panel-scroll">
+            <div id="bloco-pvalor">
+              <h4>
+                <span>
+                  Nível de Significância (α)
+                  <span class="help-tip" data-help="Probabilidade máxima aceita de rejeitar uma hipótese verdadeira (erro Tipo I). O padrão mais usado na agronomia é α = 0,05 (5%).">?</span>
+                </span>
+              </h4>
+              <div class="alfa-pills">
+                <div class="alfa-pill" data-val="0.01" onclick="selecionarAlfa(0.01)">α = 0,01 (1%)</div>
+                <div class="alfa-pill ativo" data-val="0.05" onclick="selecionarAlfa(0.05)">α = 0,05 (5%)</div>
+                <div class="alfa-pill" data-val="0.10" onclick="selecionarAlfa(0.10)">α = 0,10 (10%)</div>
+              </div>
+              <div class="alfa-custom-row">
+                <label>Valor personalizado:</label>
+                <input type="number" id="input-alfa" class="dune-input input-alfa" step="0.005" min="0.0001" max="0.5" value="0.05" oninput="atualizarAlfaManual(this.value)" />
+              </div>
+            </div>
+
+            <div id="aviso-sem-grafico" class="aviso-tabela-box" style="display:none;">
+              Esta análise gera apenas tabelas estatísticas descritivas (sem figuras). Ajuste o nível de significância se aplicável e clique em <strong>Gerar Código R</strong>.
+            </div>
+
+            <div id="bloco-paleta">
+              <h4>
+                <span>
+                  Paleta de Cores
+                  <span class="help-tip" data-help="Sequência de cores aplicadas às barras, curvas ou grupos dos gráficos gerados pelo ggplot2. Clique em um slot para editá-lo.">?</span>
+                </span>
+                <div class="acoes-inline">
+                  <span class="texto-slot-ativo" id="lbl-slot-ativo">Cor 1</span>
+                  <button class="btn-ghost btn-mini" onclick="adicionarSlotCor()">+ Cor</button>
+                </div>
+              </h4>
+
+              <div class="paleta-ativa" id="container-paleta"></div>
+
+              <div class="seletor-espectro">
+                <div class="canvas-box">
+                  <canvas id="canvas-espectro" width="400" height="105"></canvas>
+                </div>
+
+                <input type="range" min="0" max="360" value="32" class="hue-slider" id="slider-matiz" oninput="mudarMatiz(this.value)" />
+
+                <div class="swatches-grid" id="grid-swatches"></div>
+
+                <div class="hex-row">
+                  <div class="preview-cor-atual" id="preview-cor"></div>
+                  <input type="text" id="input-hex" class="dune-input input-hex" maxlength="7" value="#F2A33A" oninput="digitarHex(this.value)" />
+                  <span class="texto-hex-dica">HEX (#000000 a #FFFFFF)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coluna Direita: Estúdio de Publicação Científica -->
+          <div class="panel-box panel-scroll" id="bloco-estilo-grafico">
+            <h4>
+              <span>
+                Acabamento Científico do Gráfico
+                <span class="help-tip" data-help="Personaliza o tema do ggplot2, tipografia, barras de erro, equações e resolução de exportação para deixar a figura pronta para artigos e teses.">?</span>
+              </span>
+              <button class="btn-ghost btn-mini" onclick="resetarConfigGrafico()">Padrão Artigo</button>
+            </h4>
+
+            <!-- Sub-bloco A: Estrutura e Fundo -->
+            <div class="graf-secao">
+              <div class="graf-secao-titulo">1. Estrutura, Moldura e Fundo</div>
+              <div class="graf-grid-2">
+                <div class="graf-campo">
+                  <label>
+                    Estilo da Moldura
+                    <span class="help-tip" data-help="Clássico (theme_classic) mostra apenas os eixos X e Y em L, sendo o padrão preferido de revistas científicas. Caixa fechada (theme_bw) desenha borda nos 4 lados.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-tema" onchange="atualizarConfigGrafico('tema', this.value)">
+                    <option value="classic">Clássico (Eixos X e Y em L)</option>
+                    <option value="bw">Caixa Fechada (Borda 4 lados)</option>
+                    <option value="minimal">Minimalista (Sem bordas)</option>
+                    <option value="light">Claro Suave (Grade leve)</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo">
+                  <label>
+                    Linhas de Grade (Grid)
+                    <span class="help-tip" data-help="Controla as linhas auxiliares no fundo do gráfico. Revistas científicas geralmente pedem fundo limpo (Sem grade) ou apenas linhas horizontais principais.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-grid" onchange="atualizarConfigGrafico('grid', this.value)">
+                    <option value="none">Sem grade (Fundo limpo)</option>
+                    <option value="major_y">Apenas horizontais principais</option>
+                    <option value="major">Principais (X e Y)</option>
+                    <option value="both">Completa (Principais + Secundárias)</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo">
+                  <label>
+                    Fundo da Imagem
+                    <span class="help-tip" data-help="Escolha Branco Sólido para artigos/PDFs ou Transparente para inserir diretamente sobre slides e pôsteres sem caixa branca ao redor.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-fundo" onchange="atualizarConfigGrafico('fundo', this.value)">
+                    <option value="white">Branco sólido (#FFFFFF)</option>
+                    <option value="transparent">Transparente (Slides / Pôster)</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo">
+                  <label>
+                    Ancorar Eixo Y no Zero
+                    <span class="help-tip" data-help="Elimina o vão vazio abaixo das barras (expand = 0 na base) e adiciona 15% de folga no topo para que as letras estatísticas não fiquem cortadas.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-ancorar-zero" onchange="atualizarConfigGrafico('ancorar_zero', this.value === 'true')">
+                    <option value="true">Sim (Base em 0 + folga topo)</option>
+                    <option value="false">Automático (Escala livre)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub-bloco B: Tipografia e Eixos -->
+            <div class="graf-secao">
+              <div class="graf-secao-titulo">2. Tipografia e Eixos</div>
+              <div class="graf-grid-2">
+                <div class="graf-campo">
+                  <label>
+                    Família da Fonte
+                    <span class="help-tip" data-help="Sem serifa (Arial/Helvetica) é exigida pela maioria das revistas internacionais; Com serifa (Times New Roman) segue normas clássicas de teses e dissertações.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-fonte-familia" onchange="atualizarConfigGrafico('fonte_familia', this.value)">
+                    <option value="sans">Sem Serifa (Arial / Helvetica)</option>
+                    <option value="serif">Com Serifa (Times New Roman)</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo">
+                  <label>
+                    Tamanho Base da Fonte
+                    <span class="help-tip" data-help="Define o tamanho dos textos nos eixos e legendas. Use 12 pt ou 14 pt quando a figura for reduzida para uma coluna de revista.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-fonte-tamanho" onchange="atualizarConfigGrafico('fonte_tamanho', Number(this.value))">
+                    <option value="10">10 pt (Compacto)</option>
+                    <option value="12" selected>12 pt (Padrão Artigo)</option>
+                    <option value="14">14 pt (Alta Legibilidade)</option>
+                    <option value="16">16 pt (Pôster / Apresentação)</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo">
+                  <label>
+                    Cor das Letras e Eixos
+                    <span class="help-tip" data-help="Por padrão o ggplot2 usa cinza escuro nas letras. Trocar para Preto Puro (#000000) evita impressão apagada e atende normas editoriais.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-cor-texto" onchange="atualizarConfigGrafico('cor_texto', this.value)">
+                    <option value="#000000">Preto Puro (#000000)</option>
+                    <option value="#222222">Grafite Escuro (#222222)</option>
+                    <option value="#503C2C">Marrom Sépia (#503C2C)</option>
+                    <option value="#1B365D">Azul Marinho (#1B365D)</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo">
+                  <label>
+                    Ângulo dos Nomes no Eixo X
+                    <span class="help-tip" data-help="Incline para 45° ou 90° quando os nomes dos tratamentos forem longos e estiverem se sobrepondo no eixo horizontal.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-angulo-x" onchange="atualizarConfigGrafico('angulo_x', Number(this.value))">
+                    <option value="0">0° (Horizontal)</option>
+                    <option value="45">45° (Inclinado)</option>
+                    <option value="90">90° (Vertical)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub-bloco C: Camadas Estatísticas (Adaptável por análise) -->
+            <div class="graf-secao" id="secao-camadas-estat">
+              <div class="graf-secao-titulo">3. Elementos Estatísticos na Figura</div>
+              <div class="graf-grid-2">
+                <div class="graf-campo" id="grp-barras-erro">
+                  <label>
+                    Barras de Erro
+                    <span class="help-tip" data-help="Erro Padrão (EPM) mede a precisão da média e é o mais usado em artigos agronômicos; Desvio Padrão (DP) mostra a dispersão dos dados.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-barra-erro" onchange="atualizarConfigGrafico('barra_erro', this.value)">
+                    <option value="se">Erro Padrão da Média (EPM)</option>
+                    <option value="sd">Desvio Padrão (DP)</option>
+                    <option value="ci">Intervalo de Confiança (IC 95%)</option>
+                    <option value="none">Ocultar barras de erro</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo" id="grp-letras">
+                  <label>
+                    Letras / Marcadores de Média
+                    <span class="help-tip" data-help="Exibe ou oculta as letras do teste de comparação (Tukey, Scott-Knott, Scheffé) ou asteriscos de significância (Dunnett) acima das barras.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-mostrar-letras" onchange="atualizarConfigGrafico('mostrar_letras', this.value === 'true')">
+                    <option value="true">Exibir letras/marcadores</option>
+                    <option value="false">Ocultar letras</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo" id="grp-pontos">
+                  <label>
+                    Pontos Individuais (Jitter)
+                    <span class="help-tip" data-help="Plota cada repetição real sobre as barras ou boxplots. Muitos revisores exigem essa camada para mostrar a distribuição real dos dados.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-mostrar-pontos" onchange="atualizarConfigGrafico('mostrar_pontos', this.value === 'true')">
+                    <option value="false">Ocultar pontos brutos</option>
+                    <option value="true">Mostrar pontos das repetições</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo" id="grp-reg-eq">
+                  <label>
+                    Equação e R² no Gráfico
+                    <span class="help-tip" data-help="Escreve automaticamente a equação do polinômio ajustado e o coeficiente de determinação (R²) dentro da área do gráfico.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-reg-equacao" onchange="atualizarConfigGrafico('reg_equacao', this.value === 'true')">
+                    <option value="true">Exibir Equação + R²</option>
+                    <option value="false">Ocultar Equação</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo" id="grp-reg-ic">
+                  <label>
+                    Faixa de Confiança (95%)
+                    <span class="help-tip" data-help="Desenha a sombra do intervalo de confiança ao redor da curva de regressão ajustada (se = TRUE no geom_smooth).">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-reg-ic" onchange="atualizarConfigGrafico('reg_ic', this.value === 'true')">
+                    <option value="true">Mostrar faixa sombreada</option>
+                    <option value="false">Apenas a linha da curva</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo" id="grp-reg-linetype">
+                  <label>
+                    Diferenciar Curvas (P&B)
+                    <span class="help-tip" data-help="Alterna o traçado entre linha contínua, tracejada e pontilhada quando há múltiplos grupos, garantindo leitura mesmo em impressão preto e branco.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-reg-linetype" onchange="atualizarConfigGrafico('reg_linetype', this.value === 'true')">
+                    <option value="true">Sim (Cor + Tipo de Linha)</option>
+                    <option value="false">Não (Todas contínuas)</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo" id="grp-multi-rotulos">
+                  <label>
+                    Rótulos / Valores na Figura
+                    <span class="help-tip" data-help="Exibe os valores numéricos de correlação (r) dentro das células ou os nomes das amostras/variáveis na PCA e dendrogramas.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-multi-rotulos" onchange="atualizarConfigGrafico('multi_rotulos', this.value === 'true')">
+                    <option value="true">Exibir rótulos/valores</option>
+                    <option value="false">Ocultar rótulos</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo" id="grp-pca-elipse">
+                  <label>
+                    Elipses de Confiança (PCA)
+                    <span class="help-tip" data-help="Traça elipses de confiança (95%) ao redor de cada tratamento/grupo no biplot de Componentes Principais.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-pca-elipse" onchange="atualizarConfigGrafico('pca_elipse', this.value === 'true')">
+                    <option value="true">Exibir elipses (quando houver grupo)</option>
+                    <option value="false">Ocultar elipses</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub-bloco D: Legenda, Eixos Personalizados e Exportação -->
+            <div class="graf-secao">
+              <div class="graf-secao-titulo">4. Legenda, Rótulos e Exportação (ggsave)</div>
+              <div class="graf-grid-2">
+                <div class="graf-campo">
+                  <label>
+                    Posição da Legenda
+                    <span class="help-tip" data-help="Escolha Ocultar legenda quando os tratamentos já estiverem identificados no eixo X, evitando redundância exigida por revisores.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-legenda" onchange="atualizarConfigGrafico('legenda', this.value)">
+                    <option value="top">Topo (Acima do gráfico)</option>
+                    <option value="bottom">Base (Abaixo do gráfico)</option>
+                    <option value="right">Direita (Lateral)</option>
+                    <option value="none">Ocultar legenda</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo">
+                  <label>
+                    Formato e Resolução
+                    <span class="help-tip" data-help="Configura o comando ggsave() no final do script R para salvar as figuras automaticamente em alta definição (300/600 DPI ou PDF vetorial).">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-exportacao" onchange="atualizarConfigGrafico('exportacao', this.value)">
+                    <option value="300_png">PNG — 300 DPI (Padrão Publicação)</option>
+                    <option value="600_png">PNG — 600 DPI (Alta Definição)</option>
+                    <option value="600_tiff">TIFF — 600 DPI (Periódicos)</option>
+                    <option value="pdf">PDF Vetorial (Editável)</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo">
+                  <label>
+                    Título do Eixo X (Opcional)
+                    <span class="help-tip" data-help="Substitui o nome técnico da coluna da planilha por um título formatado (ex.: Doses de Biochar (t ha⁻¹)). Deixe vazio para usar o nome da coluna.">?</span>
+                  </label>
+                  <input type="text" id="cfg-rotulo-x" class="dune-input dune-input-full" placeholder="Automático (coluna da planilha)" oninput="atualizarConfigGrafico('rotulo_x', this.value)" />
+                </div>
+
+                <div class="graf-campo">
+                  <label>
+                    Título do Eixo Y (Opcional)
+                    <span class="help-tip" data-help="Define um rótulo personalizado para o eixo vertical (ex.: Produtividade de Grãos (kg ha⁻¹)). Se vazio, usa o nome da variável resposta.">?</span>
+                  </label>
+                  <input type="text" id="cfg-rotulo-y" class="dune-input dune-input-full" placeholder="Automático (variável resposta)" oninput="atualizarConfigGrafico('rotulo_y', this.value)" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-nav">
+          <button class="btn-ghost" onclick="abrirGuia(3)">← Voltar para Variáveis</button>
+          <button class="btn-solar" onclick="concluirConfiguracao()">Gerar Código R →</button>
+        </div>
+      </section>
+
+      <!--========= 8. GUIA 5 — RESUMO E EDITOR DO SCRIPT R ==============-->
+      <section class="guia" id="guia-5">
+        <div class="guia-header">
+          <h2 id="titulo-guia-5">Script R Gerado</h2>
+          <p>O código abaixo pode ser editado diretamente aqui antes de copiar para o RStudio ou salvar em arquivo.</p>
+        </div>
+
+        <div class="resultado-grid">
+          <div class="panel-box">
+            <h4>
+              <span>
+                Resumo da Configuração
+                <span class="help-tip" data-help="Conferência geral dos parâmetros estatísticos e visuais escolhidos antes de exportar o script.">?</span>
+              </span>
+            </h4>
+            <div class="resumo-info" id="box-resumo-final"></div>
+          </div>
+
+          <div class="panel-box">
+            <h4>
+              <span>
+                Código R
+                <span class="help-tip" data-help="Script pronto e autônomo para rodar no R ou RStudio. Ele já instala/carrega os pacotes necessários e aponta para a sua planilha.">?</span>
+              </span>
+              <div class="acoes-inline">
+                <button class="btn-ghost btn-code-action" id="btn-copiar-r" onclick="copiarScriptR()">Copiar Código</button>
+                <button class="btn-solar btn-code-save" onclick="salvarScriptR()">Salvar (.R)</button>
+              </div>
+            </h4>
+            <textarea id="output-script-r" class="codigo-editor" spellcheck="false"></textarea>
+          </div>
+        </div>
+
+        <div class="footer-nav">
+          <button class="btn-ghost" onclick="abrirGuia(4)">← Ajustar Parâmetros</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!--========= 9. RODAPÉ FIXO (LICENÇA E BOTÕES FLUTUANTES) ==============-->
+  <button class="footer-license-btn" onclick="abrirModalInfo('licenca')" title="Ver Direitos e Licenças">
+    © 2026 EasyR LICENSE
+  </button>
+
+  <div class="fab-stack">
+    <button class="fab-btn fab-contato" onclick="abrirModalInfo('contato')" title="Entre em contato">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 17a1 1 0 0 1 2 0c0 .5-.34 3-.5 4.5a.5.5 0 0 1-1 0c-.16-1.5-.5-4-.5-4.5Z"/>
+        <path d="M8 14a5 5 0 1 1 8 0"/>
+        <path d="M17 18.5a9 9 0 1 0-10 0"/>
+        <path d="M9 11l3 3 3-3"/>
+      </svg>
+    </button>
+
+    <button class="fab-btn fab-video" onclick="abrirModalInfo('video')" title="Suporte em vídeo">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="#FFFFFF">
+        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"/>
+      </svg>
+    </button>
+  </div>
+
+  <!--========= 10. MODAIS DE SUPORTE, CONTATO E LICENÇA ==============-->
+  <div class="modal-info-overlay" id="modal-info-overlay" onclick="fecharModalInfoPorFora(event)">
+    <div class="modal-info-card" role="dialog" aria-modal="true">
+      <button class="modal-close-x" onclick="fecharModalInfo()" aria-label="Fechar janela">×</button>
+
+      <!-- Modal 1: Suporte em Vídeo -->
+      <div class="modal-secao" id="modal-sec-video">
+        <h3>Suporte em vídeo</h3>
+        <p class="modal-texto-editavel" id="txt-modal-video"></p>
+
+        <div class="modal-link-box">
+          <label>Link da Playlist de Tutoriais:</label>
+          <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" id="link-playlist-yt">
+            https://www.youtube.com/playlist?list=SEU_LINK_AQUI
+          </a>
+        </div>
+      </div>
+
+      <!-- Modal 2: Entre em Contato -->
+      <div class="modal-secao" id="modal-sec-contato">
+        <h3>Entre em contato</h3>
+        <p class="modal-texto-editavel" id="txt-modal-contato"></p>
+
+        <div class="contato-grid">
+          <div class="contato-dados">
+            <div class="modal-link-box">
+              <label>Currículo Lattes:</label>
+              <a href="http://lattes.cnpq.br/" target="_blank" rel="noopener noreferrer" id="link-lattes">
+                https://busca-cv-lattes.cnpq.br/curriculo/2887463896211854
+              </a>
+            </div>
+
+            <div class="modal-link-box">
+              <label>E-mail (Gmail):</label>
+              <a href="mailto:seuemail@gmail.com" id="link-gmail">
+                Neivaldojr28@gmail.com
+              </a>
+            </div>
+          </div>
+
+          <div class="qrcode-box" id="box-qrcode-lattes">
+            <span>Espaço para<br>QR Code</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal 3: Direitos e Licenças -->
+      <div class="modal-secao" id="modal-sec-licenca">
+        <h3>Direitos e Licenças</h3>
+        <p class="modal-texto-editavel" id="txt-modal-licenca"></p>
+
+        <div class="licenca-tabs">
+          <button class="licenca-tab-btn ativo" id="tab-lic-1" onclick="trocarAbaLicenca(1)">Aba 1 — Licença</button>
+          <button class="licenca-tab-btn" id="tab-lic-2" onclick="trocarAbaLicenca(2)">Aba 2 — Documentação</button>
+        </div>
+
+        <div class="modal-link-box" id="painel-lic-1">
+          <label>Link 1 (Termos da Licença):</label>
+          <a href="https://opensource.org/licenses" target="_blank" rel="noopener noreferrer">
+            https://www.gnu.org/licenses/gpl-3.0.html
+          </a>
+        </div>
+
+        <div class="modal-link-box" id="painel-lic-2" style="display: none;">
+          <label>Link 2 (Repositório / Registro):</label>
+          <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+            https://seu-link-de-licenca-2.com
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+<!--========= 11. CONEXÃO COM O MOTOR JAVASCRIPT ==============-->
+<script src="app.js?v=4"></script>
+</body>
+</html>

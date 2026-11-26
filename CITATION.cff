@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "O uso do EasyR é livre. Caso deseje citar ou agradecer o software em seu trabalho, utilize os metadados abaixo."
+title: "EasyR"
+abstract: "Aplicação desktop para geração automatizada de scripts estatísticos e gráficos científicos em R."
+authors:
+  - family-names: " Menezes Ribeiro Júnior"
+    given-names: "Neivaldo Messias"
+date-released: 2026-11-26
+license: "GPL-3.0"
+repository-code: "https://github.com/NeivaldoJr/EasyR"
