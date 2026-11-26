@@ -3,11 +3,12 @@ import base64
 import csv
 import os
 import re
+import sys
 import tempfile
 from pathlib import Path
 import pandas as pd
 import webview
-import sys
+
 RAIZ_PROJETO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if RAIZ_PROJETO not in sys.path:
     sys.path.insert(0, RAIZ_PROJETO)
@@ -17,7 +18,11 @@ from RSTS import gerar_script_r
 
 
 #========= 2. CONSTANTES DE CAMINHO ==============
-BASE_DIR = Path(__file__).resolve().parent
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    BASE_DIR = Path(sys._MEIPASS)
+else:
+    BASE_DIR = Path(__file__).resolve().parent
+
 HTML_PATH = BASE_DIR / "GUI" / "interface.html"
 
 
@@ -175,9 +180,9 @@ class Api:
                     }
                 )
 
-            preview_linhas = [
+            todas_linhas = [
                 [str(cel) if cel is not None else "" for cel in row]
-                for row in df.head(100).itertuples(index=False, name=None)
+                for row in df.itertuples(index=False, name=None)
             ]
 
             return {
@@ -190,7 +195,7 @@ class Api:
                 "total_colunas": int(len(cabecalhos)),
                 "cabecalhos": cabecalhos,
                 "colunas": colunas_info,
-                "linhas": preview_linhas,
+                "linhas": todas_linhas,
             }
         except Exception as exc:
             return {"ok": False, "erro": f"Falha ao ler planilha: {exc}"}

@@ -5,7 +5,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>EasyR</title>
-<link rel="stylesheet" href="estilo.css?v=4" />
+<link rel="stylesheet" href="estilo.css?v=6" />
 </head>
 <body class="theme-amber">
 
@@ -76,7 +76,7 @@
             <label class="toggle-vis">
               <input type="checkbox" id="chk-visualizar" onchange="alternarVisualizacaoTabela()" />
               <span>Visualizar dados</span>
-              <span class="help-tip" data-help="Exibe as primeiras 100 linhas da planilha para você conferir se números e textos foram lidos corretamente.">?</span>
+              <span class="help-tip" data-help="Exibe todas as linhas da planilha carregada para você conferir se números e textos foram lidos corretamente.">?</span>
             </label>
 
             <div class="aba-selector-box">
@@ -208,13 +208,21 @@
 
           <!-- Coluna Direita: Estúdio de Publicação Científica -->
           <div class="panel-box panel-scroll" id="bloco-estilo-grafico">
-            <h4>
-              <span>
-                Acabamento Científico do Gráfico
-                <span class="help-tip" data-help="Personaliza o tema do ggplot2, tipografia, barras de erro, equações e resolução de exportação para deixar a figura pronta para artigos e teses.">?</span>
-              </span>
-              <button class="btn-ghost btn-mini" onclick="resetarConfigGrafico()">Padrão Artigo</button>
-            </h4>
+            <div class="studio-header">
+              <h4>
+                <span>
+                  Acabamento Científico do Gráfico
+                  <span class="help-tip" data-help="Personaliza o tema do ggplot2, tipografia, barras de erro, equações e exportação. Use 'Padrão Artigo' ou salve suas próprias configurações em Personalizado 1, 2 e 3.">?</span>
+                </span>
+              </h4>
+
+              <div class="presets-toolbar">
+                <button class="btn-ghost btn-mini" id="btn-padrao-artigo" onclick="resetarConfigGrafico()" title="Restaurar configurações padrão de artigo científico">
+                  Padrão Artigo
+                </button>
+                <div class="presets-slots-group" id="bar-presets-grafico"></div>
+              </div>
+            </div>
 
             <!-- Sub-bloco A: Estrutura e Fundo -->
             <div class="graf-secao">
@@ -433,8 +441,20 @@
                   <select class="dune-select dune-select-full" id="cfg-legenda" onchange="atualizarConfigGrafico('legenda', this.value)">
                     <option value="top">Topo (Acima do gráfico)</option>
                     <option value="bottom">Base (Abaixo do gráfico)</option>
+                    <option value="left">Esquerda (Lateral)</option>
                     <option value="right">Direita (Lateral)</option>
                     <option value="none">Ocultar legenda</option>
+                  </select>
+                </div>
+
+                <div class="graf-campo">
+                  <label>
+                    Salvar Gráficos em Pasta
+                    <span class="help-tip" data-help="Quando ativado, o script R cria uma pasta no diretório da planilha e exporta cada gráfico automaticamente. Se desativado, os gráficos são exibidos apenas na janela Plots do RStudio.">?</span>
+                  </label>
+                  <select class="dune-select dune-select-full" id="cfg-salvar-graficos" onchange="atualizarConfigGrafico('salvar_graficos', this.value === 'true')">
+                    <option value="true">Sim (Salvar arquivos na pasta)</option>
+                    <option value="false">Não (Exibir apenas no RStudio)</option>
                   </select>
                 </div>
 
@@ -453,6 +473,14 @@
 
                 <div class="graf-campo">
                   <label>
+                    Nome da Pasta de Saída
+                    <span class="help-tip" data-help="Subpasta criada ao lado da sua planilha para guardar as imagens exportadas (padrão: Graficos_EasyR).">?</span>
+                  </label>
+                  <input type="text" id="cfg-pasta-graficos" class="dune-input dune-input-full" placeholder="Graficos_EasyR" oninput="atualizarConfigGrafico('pasta_graficos', this.value)" />
+                </div>
+
+                <div class="graf-campo">
+                  <label>
                     Título do Eixo X (Opcional)
                     <span class="help-tip" data-help="Substitui o nome técnico da coluna da planilha por um título formatado (ex.: Doses de Biochar (t ha⁻¹)). Deixe vazio para usar o nome da coluna.">?</span>
                   </label>
@@ -466,6 +494,10 @@
                   </label>
                   <input type="text" id="cfg-rotulo-y" class="dune-input dune-input-full" placeholder="Automático (variável resposta)" oninput="atualizarConfigGrafico('rotulo_y', this.value)" />
                 </div>
+              </div>
+
+              <div class="graf-aviso-box">
+                <strong>Aviso sobre acabamento visual:</strong> Dependendo da quantidade de tratamentos ou do comprimento dos textos, podem ocorrer pequenos defeitos de alinhamento ou cortes nas bordas da imagem gerada no R. Sugere-se manter os <strong>nomes dos tratamentos, fatores e rótulos pequenos</strong> para evitar cortes nos eixos e legendas.
               </div>
             </div>
           </div>
@@ -551,8 +583,8 @@
 
         <div class="modal-link-box">
           <label>Link da Playlist de Tutoriais:</label>
-          <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" id="link-playlist-yt">
-            https://www.youtube.com/playlist?list=SEU_LINK_AQUI
+          <a href="https://youtube.com/playlist?list=PLeOG4lxJDPIs&si=nijgV75SmmWGt0_q" target="_blank" rel="noopener noreferrer" id="link-playlist-yt">
+            https://youtube.com/playlist?list=PLeOG4lxJDPIs&si=nijgV75SmmWGt0_q
           </a>
         </div>
       </div>
@@ -566,21 +598,21 @@
           <div class="contato-dados">
             <div class="modal-link-box">
               <label>Currículo Lattes:</label>
-              <a href="http://lattes.cnpq.br/" target="_blank" rel="noopener noreferrer" id="link-lattes">
+              <a href="https://busca-cv-lattes.cnpq.br/curriculo/2887463896211854" target="_blank" rel="noopener noreferrer" id="link-lattes">
                 https://busca-cv-lattes.cnpq.br/curriculo/2887463896211854
               </a>
             </div>
 
             <div class="modal-link-box">
               <label>E-mail (Gmail):</label>
-              <a href="mailto:seuemail@gmail.com" id="link-gmail">
+              <a href="mailto:Neivaldojr28@gmail.com" id="link-gmail">
                 Neivaldojr28@gmail.com
               </a>
             </div>
           </div>
 
           <div class="qrcode-box" id="box-qrcode-lattes">
-            <span>Espaço para<br>QR Code</span>
+            <img src="qrcode_lattes.png" alt="QR Code Currículo Lattes" />
           </div>
         </div>
       </div>
@@ -597,15 +629,15 @@
 
         <div class="modal-link-box" id="painel-lic-1">
           <label>Link 1 (Termos da Licença):</label>
-          <a href="https://opensource.org/licenses" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">
             https://www.gnu.org/licenses/gpl-3.0.html
           </a>
         </div>
 
         <div class="modal-link-box" id="painel-lic-2" style="display: none;">
           <label>Link 2 (Repositório / Registro):</label>
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-            https://seu-link-de-licenca-2.com
+          <a href="https://github.com/NeivaldoJr/EasyR" target="_blank" rel="noopener noreferrer">
+            https://github.com/NeivaldoJr/EasyR
           </a>
         </div>
       </div>
@@ -613,6 +645,6 @@
   </div>
   
 <!--========= 11. CONEXÃO COM O MOTOR JAVASCRIPT ==============-->
-<script src="app.js?v=4"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

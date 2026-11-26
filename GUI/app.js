@@ -1,4 +1,6 @@
 //========= 1. MEMÓRIA E CONSTANTES GLOBAIS ==============
+const STORAGE_PRESETS_KEY = "easyr_presets_grafico_v1";
+
 function criarConfigGraficoPadrao() {
   return {
     tema: "classic",
@@ -18,6 +20,8 @@ function criarConfigGraficoPadrao() {
     multi_rotulos: true,
     pca_elipse: true,
     legenda: "top",
+    salvar_graficos: true,
+    pasta_graficos: "Graficos_EasyR",
     exportacao: "300_png",
     rotulo_x: "",
     rotulo_y: ""
@@ -25,6 +29,14 @@ function criarConfigGraficoPadrao() {
 }
 
 let catalogo = [];
+let presetsGraficos = [
+  { nome: "Personalizado 1", config: null, paleta: null },
+  { nome: "Personalizado 2", config: null, paleta: null },
+  { nome: "Personalizado 3", config: null, paleta: null }
+];
+let presetAtivo = null;
+let presetEditando = null;
+
 let estado = {
   analiseAtual: null,
   dados: null,
@@ -73,6 +85,13 @@ const LABELS_RESUMO_GRAFICO = {
     ci: "IC 95%",
     none: "Oculta"
   },
+  legenda: {
+    top: "Topo",
+    bottom: "Base",
+    left: "Esquerda",
+    right: "Direita",
+    none: "Oculta"
+  },
   exportacao: {
     "300_png": "PNG 300 DPI",
     "600_png": "PNG 600 DPI",
@@ -96,6 +115,8 @@ async function iniciarEasyR() {
   const btnTema = document.getElementById("btn-tema");
   if (btnTema) btnTema.innerText = "Modo: Horizonte Âmbar";
 
+  carregarPresetsSalvos();
+  renderizarBotoesPresets();
   inicializarTooltips();
   sincronizarFormularioGrafico();
 
@@ -511,6 +532,7 @@ function irParaParametros() {
     gridParam.style.gridTemplateColumns = "0.92fr 1.08fr";
     gridParam.style.maxWidth = "none";
     adaptarCamadasEstatisticas(idAnalise);
+    renderizarBotoesPresets();
     sincronizarFormularioGrafico();
     renderizarPaleta();
     desenharEspectro(estado.matizAtual);
@@ -541,10 +563,23 @@ function adaptarCamadasEstatisticas(idAnalise) {
 
 function atualizarConfigGrafico(chave, valor) {
   estado.graficoConfig[chave] = valor;
+  if (chave === "salvar_graficos") {
+    sincronizarEstadoExportacao();
+  }
+}
+
+function sincronizarEstadoExportacao() {
+  const ativo = Boolean(estado.graficoConfig.salvar_graficos);
+  const selExp = document.getElementById("cfg-exportacao");
+  const inpPasta = document.getElementById("cfg-pasta-graficos");
+  if (selExp) selExp.disabled = !ativo;
+  if (inpPasta) inpPasta.disabled = !ativo;
 }
 
 function resetarConfigGrafico() {
   estado.graficoConfig = criarConfigGraficoPadrao();
+  presetAtivo = null;
+  renderizarBotoesPresets();
   sincronizarFormularioGrafico();
 }
 
@@ -572,9 +607,166 @@ function sincronizarFormularioGrafico() {
   setVal("cfg-multi-rotulos", c.multi_rotulos);
   setVal("cfg-pca-elipse", c.pca_elipse);
   setVal("cfg-legenda", c.legenda);
+  setVal("cfg-salvar-graficos", c.salvar_graficos);
+  setVal("cfg-pasta-graficos", c.pasta_graficos);
   setVal("cfg-exportacao", c.exportacao);
   setVal("cfg-rotulo-x", c.rotulo_x);
   setVal("cfg-rotulo-y", c.rotulo_y);
+  sincronizarEstadoExportacao();
+}
+
+//--- 6.1.1 Perfis Personalizados (1, 2 e 3) ---
+function carregarPresetsSalvos() {
+  try {
+    const bruto = localStorage.getItem(STORAGE_PRESETS_KEY);
+    if (!bruto) return;
+    const lido = JSON.parse(bruto);
+    if (Array.isArray(lido) && lido.length === 3) {
+      presetsGraficos = lido.map((item, idx) => ({
+        nome: (item && typeof item.nome === "string" && item.nome.trim()) ? item.nome.trim() : `Personalizado ${idx + 1}`,
+        config: (item && item.config && typeof item.config === "object") ? item.config : null,
+        paleta: (item && Array.isArray(item.paleta) && item.paleta.length > 0) ? item.paleta : null
+      }));
+    }
+  } catch (e) {
+    // Mantém valores padrão em memória caso localStorage esteja indisponível
+  }
+}
+
+function persistirPresets() {
+  try {
+    localStorage.setItem(STORAGE_PRESETS_KEY, JSON.stringify(presetsGraficos));
+  } catch (e) {
+    // Ignora falha de armazenamento
+  }
+}
+
+function renderizarBotoesPresets() {
+  const barra = document.getElementById("bar-presets-grafico");
+  if (!barra) return;
+
+  barra.innerHTML = presetsGraficos.map((preset, idx) => {
+    const temDados = Boolean(preset.config);
+    const ativoCls = presetAtivo === idx ? "ativo" : "";
+    const statusTip = temDados
+      ? `Clique para carregar "${preset.nome}"`
+      : `"${preset.nome}" ainda vazio — clique no disquete ao lado para salvar sua configuração atual`;
+
+    if (presetEditando === idx) {
+      return `
+        <div class="preset-chip ${ativoCls}">
+          <input
+            type="text"
+            class="preset-rename-input"
+            id="input-rename-preset-${idx}"
+            maxlength="24"
+            value="${escaparHtml(preset.nome)}"
+            onkeydown="tratarTeclaRenamePreset(event, ${idx})"
+            onblur="confirmarRenamePreset(${idx}, this.value)"
+          />
+        </div>
+      `;
+    }
+
+    return `
+      <div class="preset-chip ${ativoCls}">
+        <span
+          class="preset-chip-nome ${temDados ? "" : "vazio"}"
+          title="${escaparHtml(statusTip)}"
+          onclick="aplicarPresetPersonalizado(${idx})"
+          ondblclick="iniciarRenamePreset(${idx}, event)"
+        >${escaparHtml(preset.nome)}</span>
+        <button
+          type="button"
+          class="preset-chip-btn"
+          id="btn-save-preset-${idx}"
+          title="Salvar configurações atuais em ${escaparHtml(preset.nome)}"
+          onclick="salvarPresetPersonalizado(${idx}, event)"
+        >💾</button>
+        <button
+          type="button"
+          class="preset-chip-btn"
+          title="Renomear ${escaparHtml(preset.nome)}"
+          onclick="iniciarRenamePreset(${idx}, event)"
+        >✎</button>
+      </div>
+    `;
+  }).join("");
+
+  if (presetEditando !== null) {
+    const inp = document.getElementById(`input-rename-preset-${presetEditando}`);
+    if (inp) {
+      inp.focus();
+      inp.select();
+    }
+  }
+}
+
+function salvarPresetPersonalizado(idx, evento) {
+  if (evento) evento.stopPropagation();
+  presetsGraficos[idx] = {
+    nome: presetsGraficos[idx].nome,
+    config: { ...estado.graficoConfig },
+    paleta: [...estado.paletaGraficos]
+  };
+  presetAtivo = idx;
+  persistirPresets();
+  renderizarBotoesPresets();
+
+  const btn = document.getElementById(`btn-save-preset-${idx}`);
+  if (btn) {
+    btn.textContent = "✓";
+    setTimeout(() => {
+      const b = document.getElementById(`btn-save-preset-${idx}`);
+      if (b) b.textContent = "💾";
+    }, 1100);
+  }
+}
+
+function aplicarPresetPersonalizado(idx) {
+  const preset = presetsGraficos[idx];
+  if (!preset || !preset.config) {
+    alert(`O perfil "${preset ? preset.nome : `Personalizado ${idx + 1}`}" ainda não possui configuração salva.\n\nAjuste as opções desejadas e clique no ícone 💾 ao lado do nome para salvar.`);
+    return;
+  }
+
+  estado.graficoConfig = { ...criarConfigGraficoPadrao(), ...preset.config };
+  if (Array.isArray(preset.paleta) && preset.paleta.length > 0) {
+    estado.paletaGraficos = [...preset.paleta];
+    estado.indiceCorAtiva = 0;
+    renderizarPaleta();
+  }
+
+  presetAtivo = idx;
+  sincronizarFormularioGrafico();
+  renderizarBotoesPresets();
+}
+
+function iniciarRenamePreset(idx, evento) {
+  if (evento) evento.stopPropagation();
+  presetEditando = idx;
+  renderizarBotoesPresets();
+}
+
+function tratarTeclaRenamePreset(evento, idx) {
+  if (evento.key === "Enter") {
+    evento.preventDefault();
+    confirmarRenamePreset(idx, evento.target.value);
+  } else if (evento.key === "Escape") {
+    presetEditando = null;
+    renderizarBotoesPresets();
+  }
+}
+
+function confirmarRenamePreset(idx, novoNome) {
+  if (presetEditando !== idx) return;
+  const limpo = String(novoNome || "").trim();
+  if (limpo) {
+    presetsGraficos[idx].nome = limpo;
+    persistirPresets();
+  }
+  presetEditando = null;
+  renderizarBotoesPresets();
 }
 
 //--- 6.2 Controles de Nível de Significância (α) ---
@@ -727,6 +919,10 @@ async function concluirConfiguracao() {
   const fatores = { ...estado.fatoresSelecionados };
   const cfgGraf = usaGrafico ? { ...estado.graficoConfig } : null;
 
+  if (cfgGraf && !String(cfgGraf.pasta_graficos || "").trim()) {
+    cfgGraf.pasta_graficos = "Graficos_EasyR";
+  }
+
   const payload = {
     analise_id: estado.analiseAtual.id,
     analise_nome: estado.analiseAtual.nome,
@@ -772,13 +968,16 @@ async function concluirConfiguracao() {
   if (usaGrafico && cfgGraf) {
     const temaTxt = LABELS_RESUMO_GRAFICO.tema[cfgGraf.tema] || cfgGraf.tema;
     const gridTxt = LABELS_RESUMO_GRAFICO.grid[cfgGraf.grid] || cfgGraf.grid;
-    const expTxt = LABELS_RESUMO_GRAFICO.exportacao[cfgGraf.exportacao] || cfgGraf.exportacao;
+    const legTxt = LABELS_RESUMO_GRAFICO.legenda[cfgGraf.legenda] || cfgGraf.legenda;
+    const expTxt = cfgGraf.salvar_graficos
+      ? `${LABELS_RESUMO_GRAFICO.exportacao[cfgGraf.exportacao] || cfgGraf.exportacao} (Pasta: ${cfgGraf.pasta_graficos})`
+      : "Não salvar em pasta (apenas RStudio)";
     const fonteTxt = cfgGraf.fonte_familia === "serif" ? "Times New Roman" : "Arial/Helvetica";
 
     resumoGraficoHtml = `
       <div><strong>Paleta:</strong> ${chipsCores}</div>
       <div><strong>Tema / Grade:</strong> ${escaparHtml(temaTxt)} · ${escaparHtml(gridTxt)}</div>
-      <div><strong>Tipografia:</strong> ${escaparHtml(fonteTxt)} (${cfgGraf.fonte_tamanho} pt, cor ${escaparHtml(cfgGraf.cor_texto)})</div>
+      <div><strong>Tipografia / Legenda:</strong> ${escaparHtml(fonteTxt)} (${cfgGraf.fonte_tamanho} pt) · Legenda: ${escaparHtml(legTxt)}</div>
       <div><strong>Exportação:</strong> ${escaparHtml(expTxt)}</div>
     `;
   }
@@ -862,10 +1061,11 @@ function inicializarTooltips() {
   });
 }
 
+
 //========= 9. CONTROLE DOS MODAIS DE SUPORTE, CONTATO E LICENÇA ==============
-const TEXTO_PLACEHOLDER_VIDEO = "Assista a tutoriais passo a passo para aprender a importar suas planilhas e gerar seus scripts no EasyR com segurança. ";
-const TEXTO_PLACEHOLDER_CONTATO = "Dúvidas, sugestões de novas análises estatísticas ou parcerias acadêmicas? Entre  em contato pelo e-mail abaixo! Caso queira saber mais sobre minha persona acesse meu Currículo Lattes.";
-const TEXTO_PLACEHOLDER_LICENCA = `EasyR — Copyright © 2026 Neivaldo Messias M. Ribeiro Júnior. Este software é livre e de código aberto, distribuído sem fins lucrativos à comunidade acadêmica sob a licença GNU GPL-3.0. Você pode usar, compartilhar e adaptar o programa livremente, desde que eventuais versões modificadas mantenham o código aberto sob a mesma licença. Não há obrigação de citação, mas uma menção opcional nos agradecimentos do seu trabalho ajuda a espalhar a ferramenta para outros pesquisadores.`;
+const TEXTO_PLACEHOLDER_VIDEO = "Assista a tutoriais passo a passo para aprender a importar suas planilhas e gerar seus scripts no EasyR com segurança.";
+const TEXTO_PLACEHOLDER_CONTATO = "Dúvidas, sugestões de novas análises estatísticas ou parcerias acadêmicas? Entre em contato pelo e-mail abaixo! Caso queira saber mais sobre minha persona acesse meu Currículo Lattes.";
+const TEXTO_PLACEHOLDER_LICENCA = `EasyR — Copyright © 2026 Neivaldo Messias M. Ribeiro Júnior. Este software é livre e de código aberto, distribuído sem fins lucrativos à comunidade acadêmica sob a licença GNU GPL-3.0. Você pode usar, compartilhar e adaptar o programa livremente, desde que eventuais versões modificadas mantenham o código aberto sob a mesma licença. Não há obrigação de citação, mas uma menção nos agradecimentos do seu trabalho ajuda a espalhar a ferramenta para outros pesquisadores. Lembre de citar o programa nas referências do seu trabalho, link para o DOI na aba de documentação.`;
 
 function preencherPlaceholdersModais() {
   const elVideo = document.getElementById("txt-modal-video");

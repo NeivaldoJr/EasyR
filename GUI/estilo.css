@@ -368,6 +368,11 @@ select.dune-select:focus, input.dune-input:focus {
   border-color: var(--accent);
 }
 
+select.dune-select:disabled, input.dune-input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 select.dune-select option {
   background-color: var(--select-bg);
   color: var(--text-main);
@@ -515,6 +520,7 @@ body.theme-amber .badge-warn {
   border-color: #EF5350;
   color: #FFCDD2;
 }
+
 
 /*========= 8. GUIA 3 — MAPEAMENTO DE FATORES E VARIÁVEIS ==============*/
 .mapeamento-grid {
@@ -800,6 +806,96 @@ body.theme-amber .badge-warn {
   color: var(--text-muted);
 }
 
+/*--- Barra de Perfis Personalizados (Padrão Artigo + Personalizado 1, 2, 3) ---*/
+.studio-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.studio-header h4 {
+  margin-bottom: 0;
+}
+
+.presets-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.presets-slots-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.preset-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--select-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 3px 6px 3px 9px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.preset-chip:hover {
+  border-color: var(--accent);
+}
+
+.preset-chip.ativo {
+  border-color: var(--accent);
+  background: linear-gradient(95deg, rgba(243, 207, 143, 0.28) 0%, rgba(242, 163, 58, 0.22) 100%);
+  box-shadow: 0 0 0 1px rgba(242, 163, 58, 0.35);
+}
+
+.preset-chip-nome {
+  cursor: pointer;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preset-chip-nome.vazio {
+  opacity: 0.78;
+}
+
+.preset-chip-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 3px;
+  border-radius: 5px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.preset-chip-btn:hover {
+  color: var(--text-main);
+  background: rgba(242, 163, 58, 0.22);
+}
+
+.preset-rename-input {
+  width: 96px;
+  background: var(--card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  outline: none;
+}
+
 /*--- Sub-controles do Estúdio Gráfico Científico ---*/
 .graf-secao {
   border-top: 1px solid var(--card-border);
@@ -837,6 +933,17 @@ body.theme-amber .badge-warn {
   font-weight: 700;
   display: flex;
   align-items: center;
+}
+
+.graf-aviso-box {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(242, 163, 58, 0.14);
+  border: 1px solid rgba(242, 163, 58, 0.55);
+  color: var(--text-main);
+  font-size: 11.8px;
+  line-height: 1.45;
 }
 
 .aviso-tabela-box {
@@ -976,6 +1083,7 @@ body.theme-amber .easyr-tooltip-box {
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.65);
 }
 
+
 /*========= 12. LICENÇA INFERIOR, BOTÕES FLUTUANTES E MODAIS ==============*/
 .footer-license-btn {
   position: fixed;
@@ -1112,7 +1220,6 @@ body.theme-amber .easyr-tooltip-box {
   white-space: pre-line;
   overflow-wrap: break-word;
 }
-
 
 .modal-link-box {
   background: var(--select-bg);

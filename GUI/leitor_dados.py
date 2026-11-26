@@ -94,10 +94,10 @@ class LeitorPlanilha:
                 "nulos": nulos,
                 "alerta_texto": alerta_texto,
                 "n_unicos": len(unicos),
-                "valores_unicos": unicos[:200],
+                "valores_unicos": unicos,
             })
 
-        amostra = self.df.head(300).fillna("NA")
+        amostra = self.df.fillna("NA")
         todas_linhas = amostra.astype(str).values.tolist()
 
         return {
