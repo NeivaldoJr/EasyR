@@ -24,6 +24,7 @@ else:
     BASE_DIR = Path(__file__).resolve().parent
 
 HTML_PATH = BASE_DIR / "GUI" / "interface.html"
+ICON_PATH = BASE_DIR / "icone_easyr.ico"
 
 
 #========= 3. FUNÇÕES AUXILIARES DE DADOS ==============
@@ -249,4 +250,8 @@ if __name__ == "__main__":
         min_size=(980, 640),
     )
     api._janela = janela
-    webview.start()
+
+    if ICON_PATH.exists():
+        webview.start(icon=str(ICON_PATH))
+    else:
+        webview.start()
